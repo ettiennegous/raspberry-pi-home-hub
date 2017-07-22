@@ -21,10 +21,12 @@ pir = MotionSensor(16)
 
 ledDelay1 = 0.05
 ledDelay2 = 0.5
-turnOffDelay = 10
+turnOffDelay = 5
 screenOn = False
 firstRun = True
 debug = True
+useLeds = True
+sampleRateSec = 10
 
 def PrintMessage(msg):
     if(debug):
@@ -80,26 +82,29 @@ Button2Thread.start()
 while True:
     try:
         if(pir.motion_detected):
-
+            PrintMessage('Motion detected')
             if not(screenOn):
                 subprocess.call(["/home/pi/rpi-toggle-screen.sh","on"])
                 screenOn = True
                 ScreenInstOff.terminate()
                 ScreenInstOn.terminate()
-                ScreenInstOn = MyLeds(sequenceOn, ledDelay1)
-                ScreenOnThread = Thread(target=ScreenInstOn.run)
-                ScreenOnThread.start()
+                if(useLeds):
+                    ScreenInstOn = MyLeds(sequenceOn, ledDelay1)
+                    ScreenOnThread = Thread(target=ScreenInstOn.run)
+                    ScreenOnThread.start()
             sleep(turnOffDelay)
         else:
+            PrintMessage('No Motion')
             if(screenOn):
                 ScreenInstOff.terminate()
-                ScreenInstOn.terminate()            
-                ScreenInstOff = MyLeds(sequenceOff, ledDelay2)
-                ScreenOffThread = Thread(target=ScreenInstOff.run)
-                ScreenOffThread.start()
+                ScreenInstOn.terminate()
+                if(useLeds):
+                    ScreenInstOff = MyLeds(sequenceOff, ledDelay2)
+                    ScreenOffThread = Thread(target=ScreenInstOff.run)
+                    ScreenOffThread.start()
                 subprocess.call(["/home/pi/rpi-toggle-screen.sh","off"])
                 firstRun = False
                 screenOn = False
-
+        sleep(sampleRateSec)
     except KeyboardInterrupt:
         break
